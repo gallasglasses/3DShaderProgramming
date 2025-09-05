@@ -8,6 +8,9 @@
       <UniqueIdentifier>{f18ab499-84e1-499f-8eff-9754361e0e52}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="sources\FG_3DShaderProg">
+      <UniqueIdentifier>{d22ace0c-b089-4b44-8c94-bf7e8bc45d5e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -34,6 +37,24 @@
     <ClCompile Include="..\..\backends\imgui_impl_opengl3.cpp">
       <Filter>sources</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\FG_3DShaderProg\brute_force.cpp">
+      <Filter>sources\FG_3DShaderProg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\FG_3DShaderProg\FG_3DShaderProg.cpp">
+      <Filter>sources\FG_3DShaderProg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\FG_3DShaderProg\shader.cpp">
+      <Filter>sources\FG_3DShaderProg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\FG_3DShaderProg\stb_image.cpp">
+      <Filter>sources\FG_3DShaderProg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\FG_3DShaderProg\Terrain.cpp">
+      <Filter>sources\FG_3DShaderProg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\FG_3DShaderProg\glad.c">
+      <Filter>sources\FG_3DShaderProg</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\imconfig.h">
@@ -54,6 +75,27 @@
     <ClInclude Include="..\..\backends\imgui_impl_opengl3_loader.h">
       <Filter>sources</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\FG_3DShaderProg\brute_force.h">
+      <Filter>sources\FG_3DShaderProg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\FG_3DShaderProg\camera.h">
+      <Filter>sources\FG_3DShaderProg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\FG_3DShaderProg\height_data.h">
+      <Filter>sources\FG_3DShaderProg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\FG_3DShaderProg\shader.h">
+      <Filter>sources\FG_3DShaderProg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\FG_3DShaderProg\stb_image.h">
+      <Filter>sources\FG_3DShaderProg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\FG_3DShaderProg\Terrain.h">
+      <Filter>sources\FG_3DShaderProg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\FG_3DShaderProg\FG_3DShaderProg.h">
+      <Filter>sources\FG_3DShaderProg</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.txt" />
@@ -62,6 +104,18 @@
     </None>
     <None Include="..\..\misc\debuggers\imgui.natstepfilter">
       <Filter>imgui</Filter>
+    </None>
+    <None Include="..\..\FG_3DShaderProg\shader.fs">
+      <Filter>sources\FG_3DShaderProg</Filter>
+    </None>
+    <None Include="..\..\FG_3DShaderProg\shader.vs">
+      <Filter>sources\FG_3DShaderProg</Filter>
+    </None>
+    <None Include="..\..\FG_3DShaderProg\wireframe.fs">
+      <Filter>sources\FG_3DShaderProg</Filter>
+    </None>
+    <None Include="..\..\FG_3DShaderProg\wireframe.vs">
+      <Filter>sources\FG_3DShaderProg</Filter>
     </None>
   </ItemGroup>
 </Project>
