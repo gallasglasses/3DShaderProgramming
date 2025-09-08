@@ -106,24 +106,69 @@ float Terrain::GetAverageOf4(float a, float b, float c, float d)
     return (a + b + c + d) / 4.0f;
 }
 
-void Terrain::ApplySquareStep(int x0, int x1, int y0, int y1, MidpointDisplacement& data)
+float Terrain::GetAverageOfCount(float sum, int count)
 {
-    int cx = GetMidpoint(x0, x1);
-    int cy = GetMidpoint(y0, y1);
+    if (count > 0)
+    {
+        return sum / static_cast<float>(count);
+    }
+    else
+        return 0.f;
+}
 
-    float bottom, top, left, right;
+bool Terrain::IsWithinRange(int x, int y, int edge)
+{
+    if (x >= 0 && y >= 0 && x < edge && y < edge)
+        return true;
+    else
+        return false;
+}
 
-    data.heights[GetIndex(cx, y0, data.EdgeLength)] = GetAverageOf2(data.heights[GetIndex(x0, y0, data.EdgeLength)], data.heights[GetIndex(x1, y0, data.EdgeLength)]) + GetRandom(data.startAmplitude); //GetOffset(data.startAmplitude, data.amplitudeDecline) 
-    bottom = data.heights[GetIndex(cx, y0, data.EdgeLength)];
+//void Terrain::ApplySquareStep(int x0, int x1, int y0, int y1, MidpointDisplacement& data)
+void Terrain::ApplySquareStep(int x, int y, int half, MidpointDisplacement& data)
+{
+    float sum = 0.0f;
+    int count = 0;
 
-    data.heights[GetIndex(cx, y1, data.EdgeLength)] = GetAverageOf2(data.heights[GetIndex(x0, y1, data.EdgeLength)], data.heights[GetIndex(x1, y1, data.EdgeLength)]) + GetRandom(data.startAmplitude);
-    top = data.heights[GetIndex(cx, y1, data.EdgeLength)];
+    if (IsWithinRange(x, y + half, data.EdgeLength))
+    {
+        sum += data.heights[GetIndex(x, y + half, data.EdgeLength)]; // bottom
+        count++;
+    }
+    if (IsWithinRange(x, y - half, data.EdgeLength))
+    {
+        sum += data.heights[GetIndex(x, y - half, data.EdgeLength)]; // top
+        count++;
+    }
+    if (IsWithinRange(x - half, y, data.EdgeLength))
+    {
+        sum += data.heights[GetIndex(x - half, y, data.EdgeLength)]; // left
+        count++;
+    }
+    if (IsWithinRange(x + half, y, data.EdgeLength))
+    {
+        sum += data.heights[GetIndex(x + half, y, data.EdgeLength)]; // right
+        count++;
+    }
 
-    data.heights[GetIndex(x0, cy, data.EdgeLength)] = GetAverageOf2(data.heights[GetIndex(x0, y0, data.EdgeLength)], data.heights[GetIndex(x0, y1, data.EdgeLength)]) + GetRandom(data.startAmplitude);
-    left = data.heights[GetIndex(x0, cy, data.EdgeLength)];
+    data.heights[GetIndex(x, y, data.EdgeLength)] = GetAverageOfCount(sum, count) + GetRandom(data.startAmplitude);
 
-    data.heights[GetIndex(x1, cy, data.EdgeLength)] = GetAverageOf2(data.heights[GetIndex(x1, y0, data.EdgeLength)], data.heights[GetIndex(x1, y1, data.EdgeLength)]) + GetRandom(data.startAmplitude);
-    right = data.heights[GetIndex(x1, cy, data.EdgeLength)];
+    //int cx = GetMidpoint(x0, x1);
+    //int cy = GetMidpoint(y0, y1);
+
+    //float bottom, top, left, right;
+
+    //data.heights[GetIndex(cx, y0, data.EdgeLength)] = GetAverageOf2(data.heights[GetIndex(x0, y0, data.EdgeLength)], data.heights[GetIndex(x1, y0, data.EdgeLength)]) + GetRandom(data.startAmplitude); //GetOffset(data.startAmplitude, data.amplitudeDecline) 
+    //bottom = data.heights[GetIndex(cx, y0, data.EdgeLength)];
+
+    //data.heights[GetIndex(cx, y1, data.EdgeLength)] = GetAverageOf2(data.heights[GetIndex(x0, y1, data.EdgeLength)], data.heights[GetIndex(x1, y1, data.EdgeLength)]) + GetRandom(data.startAmplitude);
+    //top = data.heights[GetIndex(cx, y1, data.EdgeLength)];
+
+    //data.heights[GetIndex(x0, cy, data.EdgeLength)] = GetAverageOf2(data.heights[GetIndex(x0, y0, data.EdgeLength)], data.heights[GetIndex(x0, y1, data.EdgeLength)]) + GetRandom(data.startAmplitude);
+    //left = data.heights[GetIndex(x0, cy, data.EdgeLength)];
+
+    //data.heights[GetIndex(x1, cy, data.EdgeLength)] = GetAverageOf2(data.heights[GetIndex(x1, y0, data.EdgeLength)], data.heights[GetIndex(x1, y1, data.EdgeLength)]) + GetRandom(data.startAmplitude);
+    //right = data.heights[GetIndex(x1, cy, data.EdgeLength)];
 }
 
 void Terrain::ApplyDiamondStep(int x0, int x1, int y0, int y1, MidpointDisplacement& data)
@@ -139,36 +184,31 @@ void Terrain::ApplyDiamondStep(int x0, int x1, int y0, int y1, MidpointDisplacem
     data.heights[GetIndex(cx, cy, data.EdgeLength)] = GetAverageOf4(a, b, c, d) + GetRandom(data.startAmplitude);
 }
 
-void Terrain::CalculateMidpointDisplacement(MidpointDisplacement& data, int size)
+void Terrain::CalculateMidpointDisplacement(MidpointDisplacement& data, int step)
 {
-    int half = size / 2;
-    if (half < 1) return;
+    if (step < 2) return;
+    int half = step / 2;
 
-
-    /*for (int step = data.EdgeLength - 1; step > 1; step /= 2)
+    for (int y = 0; y < data.EdgeLength - 1; y += step)
     {
-        ApplyDiamondStep(x, x + size, y, y + size, data);
-        ApplySquareStep(x, x + size, y, y + size, data);
-    }*/
-
-    for (int y = 0; y < data.EdgeLength - 1; y += size)
-    {
-        for (int x = 0; x < data.EdgeLength - 1; x += size)
+        for (int x = 0; x < data.EdgeLength - 1; x += step)
         {
-            ApplySquareStep(x, x + size, y, y + size, data);
+            ApplyDiamondStep(x, x + step, y, y + step, data);
         }
     }
 
-    for (int y = 0; y < data.EdgeLength - 1; y += size)
+    for (int y = 0; y < data.EdgeLength; y += half)
     {
-        for (int x = 0; x < data.EdgeLength - 1; x += size)
+        int row = y / half;
+        int xStart = (row % 2 == 0) ? half : 0;
+        for (int x = xStart; x < data.EdgeLength; x += step)
         {
-            ApplyDiamondStep(x, x + size, y, y + size, data);
+            ApplySquareStep(x, y, half, data);
         }
     }
 
     data.startAmplitude *= data.amplitudeDecline;
-    CalculateMidpointDisplacement(data, size / 2);
+    CalculateMidpointDisplacement(data, step / 2);
 }
 
 Terrain::~Terrain()
@@ -189,7 +229,7 @@ bool Terrain::GenerateFaultFormation(int size, int iterations, int minDelta, int
 
     for (currentIteration = 0; currentIteration < iterations; currentIteration++)
     {
-        float height = maxDelta - ((maxDelta - minDelta) * currentIteration) / iterations;
+        float height = maxDelta - static_cast<float>((maxDelta - minDelta) * currentIteration) / static_cast<float>(iterations);
 
         randX1 = rand() % m_iSize;
         randZ1 = rand() % m_iSize;

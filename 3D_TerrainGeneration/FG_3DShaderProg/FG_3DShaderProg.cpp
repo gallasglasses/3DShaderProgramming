@@ -68,8 +68,8 @@ namespace FG_3DShaderProg
     //MIDPOINT_DISPLACEMENT
     int n = 7;
     int seed = 777;
-    float amplitude = 6.f;
-    float factor = 0.8f;
+    float amplitude = 1.f;
+    float factor = 1.5f;
 
     bool Init(GLFWwindow* w)
     {
@@ -228,9 +228,6 @@ namespace FG_3DShaderProg
         {
             case 1:
                 algorithm = EAlgorithm::RAW_HEIGHTMAP;
-                /*ImGui::InputInt("Size", &size);
-                size = std::clamp(size, 2, 4096);*/
-                //ImGui::DragInt("Size", &size, 1, 2, 4096, "%d", ImGuiSliderFlags_AlwaysClamp);
                 ImGui::SliderInt("Size", &size, 2, 4096, "%d", ImGuiSliderFlags_AlwaysClamp);
                 ImGui::InputText("Heightmap file", path, IM_ARRAYSIZE(path));
 
@@ -239,34 +236,18 @@ namespace FG_3DShaderProg
                 break;
             case 2:
                 algorithm = EAlgorithm::FAULT_FORMATION;
-                /*ImGui::InputInt("Size", &size);
-                size = std::clamp(size, 2, 4096);*/
-                //ImGui::DragInt("Size", &size, 1, 2, 4096, "%d", ImGuiSliderFlags_AlwaysClamp);
                 ImGui::SliderInt("Size", &size, 2, 4096, "%d", ImGuiSliderFlags_AlwaysClamp);
-
-                //ImGui::InputInt("Iterations", &iterations);
-                //ImGui::DragInt("Iterations", &iterations, 1, 1, 10000, "%d", ImGuiSliderFlags_AlwaysClamp);
                 ImGui::SliderInt("Iterations", &iterations, 1, 10000, "%d", ImGuiSliderFlags_AlwaysClamp);
-
-                //ImGui::InputFloat("Filter", &filter, 0.01f, 0.1f, "%.3f");
                 ImGui::SliderFloat("Filter", &filter, 0.0f, 1.0f, "%.3f");
-
                 ImGui::SameLine(); HelpMarker("CTRL+click to input value.");
-
                 iterations = std::max(1, iterations);
-                //filter = std::clamp(filter, 0.0f, 1.0f);
 
                 if (ImGui::Button("Generate (Fault Formation)"))
                     RebuildTerrain();
                 break;
             case 3:
                 algorithm = EAlgorithm::MIDPOINT_DISPLACEMENT;
-
-                //ImGui::SliderInt("slider int", &i1, -1, 3);
                 size = static_cast<int>(std::pow(2, n) + 1);
-
-                //if (ImGui::InputInt("n", &n, 1, 1)) //ImGuiInputTextFlags_EnterReturnsTrue  IsItemDeactivatedAfterEdit()
-                //if (ImGui::DragInt("n", &n, 1, 1, 11, "%d", ImGuiSliderFlags_AlwaysClamp))
                 if (ImGui::SliderInt("n", &n, 1, 11, "%d", ImGuiSliderFlags_AlwaysClamp))
                 {
                     size = std::max(2, static_cast<int>(std::pow(2, n) + 1));
@@ -278,8 +259,8 @@ namespace FG_3DShaderProg
                 //ImGui::DragInt("RNG Seed", &seed, 1, 1, INT_MAX, "%d", ImGuiSliderFlags_AlwaysClamp);
                 ImGui::SliderInt("RNG Seed", &seed, 1, INT_MAX / 2, "%d", ImGuiSliderFlags_AlwaysClamp); //SliderBehavior Assertion failed: *(const ImS32*)p_min >= IM_S32_MIN / 2 && *(const ImS32*)p_max <= IM_S32_MAX / 2, file imgui_widgets.cpp, line 3254
                 //ImGui::InputFloat("Noise Amplitude", &amplitude);
-                ImGui::SliderFloat("Noise Amplitude", &amplitude, 0.0f, FLT_MAX / 2.0f, "%.3f");
-                ImGui::SliderFloat("Factor", &factor, 0.0f, 1.0f, "%.3f");
+                ImGui::SliderFloat("Noise Amplitude", &amplitude, 0.0f, 1.0f, "%.3f"); //FLT_MAX / 2.0f
+                ImGui::SliderFloat("Factor", &factor, 0.0f, 5.0f, "%.3f");
                 ImGui::SameLine(); HelpMarker("CTRL+click to input value.");
 
                 if (ImGui::Button("Generate (Midpoint Displacement)"))

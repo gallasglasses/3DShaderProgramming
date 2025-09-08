@@ -33,9 +33,12 @@ protected:
     int GetIndex(int x, int y, int size);
     float GetAverageOf2(float a, float b);
     float GetAverageOf4(float a, float b, float c, float d);
-    void ApplySquareStep(int x0, int x1, int y0, int y1, MidpointDisplacement& data);
+    float GetAverageOfCount(float sum, int count);
+    bool IsWithinRange(int x, int y, int edge);
+    //void ApplySquareStep(int x0, int x1, int y0, int y1, MidpointDisplacement& data);
+    void ApplySquareStep(int x, int y, int half, MidpointDisplacement& data);
     void ApplyDiamondStep(int x0, int x1, int y0, int y1, MidpointDisplacement& data);
-    void CalculateMidpointDisplacement(MidpointDisplacement& data, int size);
+    void CalculateMidpointDisplacement(MidpointDisplacement& data, int step);
 
 public:
 
