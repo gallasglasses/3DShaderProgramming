@@ -12,6 +12,7 @@ struct BFVertex
 {
 	glm::vec3 pos;
 	glm::vec3 color;
+    glm::vec2 texCoord;
 };
 
 class Brute_Force: public Terrain

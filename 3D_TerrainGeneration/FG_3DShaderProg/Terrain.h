@@ -3,6 +3,8 @@
 #include <string>
 #include "height_data.h"
 #include <random>
+#include <array>
+#include <stb_image.h>
 
 struct MidpointDisplacement
 {
@@ -13,13 +15,53 @@ struct MidpointDisplacement
     std::vector<float> heights;
 };
 
+enum ETileType
+{
+    DIRT,
+    GRASS,
+    ROCK,
+    SNOW_TIP
+};
+
+struct TextureRegion
+{
+    int lowHeight = 0;
+    int optimalHeight = 0;
+    int highHeight = 0;
+};
+
+struct ImageTile
+{
+    int width = 0;
+    int height = 0;
+    int channels = 0;
+    std::vector<unsigned char> pixels;
+
+    bool IsLoaded() const { return width > 0 && height > 0 && !pixels.empty(); }
+};
+
+struct TextureTile
+{
+    ImageTile image;
+    TextureRegion region;
+    bool isEnabled = false;
+};
+
 class Terrain
 {
+private:
+
+    std::array<TextureTile, 4> tiles{};
+    int countTiles = 0;
+    std::vector<unsigned char> mapPixels;
+    int m_textureSize = 0;
+
 protected: 
 	
 	Height_Data m_heightData;
 	float m_fHeightScale;
     std::minstd_rand rng;
+
 
 	void FilterHeightBand(float* band, int stride, int count, float filter);
 	void FilterHeightField(std::vector<float>& heightData, float filter);
@@ -40,9 +82,17 @@ protected:
     void ApplyDiamondStep(int x0, int x1, int y0, int y1, MidpointDisplacement& data);
     void CalculateMidpointDisplacement(MidpointDisplacement& data, int step);
 
+    //texture generation
+    float RegionPercent(const TextureRegion& region, uint8_t h);
+    unsigned char InterpolateHeight(int x, int z, float heightToTexRatio);
+    bool UploadToGL();
+    bool LoadTile(ETileType type, const std::string& path);
+    void SetRegion(ETileType type, int low, int opt, int high);
+
 public:
 
 	int m_iSize;
+    unsigned int texture = 0;
 
 	Terrain() : m_fHeightScale(1.0f), m_iSize(0) {};
 	~Terrain();
@@ -51,6 +101,7 @@ public:
 
 	bool GenerateFaultFormation(int size, int iterations, int minDelta, int maxDelta, float filter);
 	bool GenerateMidpointDisplacement(int size, int seed, float amplitude, float factor);
+    bool GenerateTextureMap(int textureSize = 4096, float tileRepeat = 8.f);
 
 	bool LoadHeightMap(const std::string& filename, int iSize);
 	bool SaveHeightMap(const std::string& filename);

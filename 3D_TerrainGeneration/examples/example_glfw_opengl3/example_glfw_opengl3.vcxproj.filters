@@ -105,16 +105,16 @@
     <None Include="..\..\misc\debuggers\imgui.natstepfilter">
       <Filter>imgui</Filter>
     </None>
-    <None Include="..\..\FG_3DShaderProg\shader.fs">
+    <None Include="shader.fs">
       <Filter>sources\FG_3DShaderProg</Filter>
     </None>
-    <None Include="..\..\FG_3DShaderProg\shader.vs">
+    <None Include="shader.vs">
       <Filter>sources\FG_3DShaderProg</Filter>
     </None>
-    <None Include="..\..\FG_3DShaderProg\wireframe.fs">
+    <None Include="wireframe.fs">
       <Filter>sources\FG_3DShaderProg</Filter>
     </None>
-    <None Include="..\..\FG_3DShaderProg\wireframe.vs">
+    <None Include="wireframe.vs">
       <Filter>sources\FG_3DShaderProg</Filter>
     </None>
   </ItemGroup>

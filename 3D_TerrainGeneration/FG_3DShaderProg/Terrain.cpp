@@ -4,6 +4,9 @@
 #include <sstream>
 #include <math.h>
 
+#include <glm/glm.hpp>
+#include <glad/glad.h>
+
 void Terrain::FilterHeightBand(float* band, int stride, int count, float filter)
 {
     float heightValue = band[0];
@@ -211,6 +214,126 @@ void Terrain::CalculateMidpointDisplacement(MidpointDisplacement& data, int step
     CalculateMidpointDisplacement(data, step / 2);
 }
 
+float Terrain::RegionPercent(const TextureRegion& region, uint8_t h)
+{
+    if(h < region.lowHeight || h > region.highHeight) return 0.f;
+    if(h == region.optimalHeight) return 1.f;
+
+    if (h < region.optimalHeight)
+    {
+        float num1 = static_cast<float>(h - region.lowHeight);
+        float num2 = static_cast<float>(region.optimalHeight - region.lowHeight);
+        if(num2 > 0)
+            return num1 / num2;
+        else
+            return 0.f;
+    }
+    else
+    {
+        float num = static_cast<float>(region.highHeight - region.optimalHeight);
+        if (num > 0)
+            return (num - static_cast<float>(region.optimalHeight - h)) / num;
+        else
+            return 0.f;
+    }
+
+    return 0.f;
+}
+
+unsigned char Terrain::InterpolateHeight(int x, int z, float heightToTexRatio)
+{
+    unsigned char low, highX, highZ;
+    float interpX, interpZ;
+
+    float scaledX = x * heightToTexRatio;
+    float scaledZ = z * heightToTexRatio;
+    float interpolation;
+
+    low = GetHeightAtPoint(static_cast<int>(scaledX), static_cast<int>(scaledZ));
+    if(scaledX + 1 > m_iSize - 1)
+        return low;
+    else
+        highX = GetHeightAtPoint(static_cast<int>(scaledX + 1), static_cast<int>(scaledZ));
+
+    interpolation = scaledX - static_cast<int>(scaledX);
+    interpX = (highX - low) * interpolation + low; //(percentage - percentage increase) * difference + minimum value
+
+    if (scaledZ + 1 > m_iSize - 1)
+        return low;
+    else
+        highZ = GetHeightAtPoint(static_cast<int>(scaledX), static_cast<int>(scaledZ + 1));
+
+    interpolation = scaledZ - static_cast<int>(scaledZ);
+    interpZ = (highZ - low) * interpolation + low;
+
+    return static_cast<unsigned char>((interpX + interpZ) / 2);
+}
+
+bool Terrain::UploadToGL()
+{
+    if(mapPixels.empty() || m_textureSize <=0 ) return false;
+
+    if (texture)
+    {
+        glDeleteTextures(1, &texture);
+    }
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8, m_textureSize, m_textureSize, 0, GL_RGB, GL_UNSIGNED_BYTE, mapPixels.data()); //GL_SRGB8
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    return true;
+}
+
+bool Terrain::LoadTile(ETileType type, const std::string& path)
+{
+    ImageTile imageTile;
+
+    stbi_set_flip_vertically_on_load(true);
+    int width, height, nrChannels = 0;
+    unsigned char* data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
+    if (!data)
+    {
+        std::cout << "Failed to load tile '" << path << "'" << std::endl;
+        return false;
+    }
+
+    imageTile.width = width;
+    imageTile.height = height;
+    imageTile.channels = nrChannels;
+    imageTile.pixels.assign(data, data + width * height * nrChannels);
+
+    stbi_image_free(data);
+
+    tiles[type].image = std::move(imageTile);
+    tiles[type].isEnabled = true;
+
+    countTiles = 0;
+
+    for (const TextureTile& tile : tiles)
+    {
+        if (tile.isEnabled && tile.image.IsLoaded())
+            countTiles++;
+    }
+    return true;
+}
+
+void Terrain::SetRegion(ETileType type, int low, int opt, int high)
+{
+    low = std::max(0, std::min(255, low));
+    opt = std::max(0, std::min(255, opt));
+    high = std::max(0, std::min(255, high));
+
+    tiles[type].region = {low, opt, high};
+}
+
 Terrain::~Terrain()
 {
     UnloadHeightMap();
@@ -325,6 +448,72 @@ bool Terrain::GenerateMidpointDisplacement(int size, int seed, float amplitude, 
     }
 
     return true;
+}
+
+bool Terrain::GenerateTextureMap(int textureSize, float tileRepeat)
+{
+    if (m_iSize <= 0) return false;
+
+    countTiles = 0;
+    for (const TextureTile& tile : tiles)
+    {
+        if(tile.isEnabled && tile.image.IsLoaded())
+            countTiles++;
+    }
+
+    if(countTiles == 0)
+        return false;
+    m_textureSize = textureSize;
+    mapPixels.assign(m_textureSize * m_textureSize * 3, 0.f);
+
+
+    const float mapRatio = static_cast<float>(m_iSize) / static_cast<float>(m_textureSize);
+
+    for (int z = 0; z < m_textureSize; z++)
+    {
+        for (int x = 0; x < m_textureSize; x++)
+        {
+            float totalRed = 0.0f;
+            float totalGreen = 0.0f;
+            float totalBlue = 0.0f;
+            unsigned char interpHeight = InterpolateHeight(x, z, mapRatio);
+
+            for (const TextureTile& tile : tiles)
+            {
+                if (tile.isEnabled && tile.image.IsLoaded())
+                {
+                    float blend = RegionPercent(tile.region, interpHeight);
+                    if (blend <= 0.0f) continue;
+
+                    float fx = x * tileRepeat;
+                    float fz = z * tileRepeat;
+
+                    unsigned tx = (unsigned)fx % (unsigned)tile.image.width;
+                    unsigned ty = (unsigned)fz % (unsigned)tile.image.height;
+
+                    //get color
+                    size_t idx = static_cast<size_t>(ty * tile.image.width + tx) * tile.image.channels;
+                    unsigned char r = tile.image.pixels[idx + 0];
+                    unsigned char g = tile.image.pixels[idx + 1];
+                    unsigned char b = tile.image.pixels[idx + 2];
+
+                    totalRed += blend * (float)r;
+                    totalGreen += blend * (float)g;
+                    totalBlue += blend * (float)b;
+                }
+            }
+            totalRed = std::clamp(totalRed, 0.0f, 255.0f);
+            totalGreen = std::clamp(totalGreen, 0.0f, 255.0f);
+            totalBlue = std::clamp(totalBlue, 0.0f, 255.0f);
+
+            size_t index = static_cast<size_t>(z * textureSize + x) * 3;
+            mapPixels[index + 0] = static_cast<unsigned char>(totalRed);
+            mapPixels[index + 1] = static_cast<unsigned char>(totalGreen);
+            mapPixels[index + 2] = static_cast<unsigned char>(totalBlue);
+        }
+    }
+
+    return UploadToGL();
 }
 
 bool Terrain::LoadHeightMap(const std::string& filename, int iSize)

@@ -50,8 +50,7 @@
               "RelativeToolTip": "Test\\Camera.h",
               "ViewState": "AgIAAEwAAAAAAAAAAAAqwD0AAABSAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2025-09-01T11:05:17.296Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-09-01T11:05:17.296Z"
             },
             {
               "$type": "Document",
@@ -63,8 +62,7 @@
               "RelativeToolTip": "Test\\stb_image.cpp",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2025-08-29T12:27:47.448Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-08-29T12:27:47.448Z"
             },
             {
               "$type": "Document",
@@ -76,8 +74,7 @@
               "RelativeToolTip": "Test\\Shader.vs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABMAAAAtAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2025-08-28T13:49:40.497Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-08-28T13:49:40.497Z"
             },
             {
               "$type": "Document",
@@ -101,8 +98,7 @@
               "RelativeToolTip": "Test\\Shader.cpp",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAC8AAAAxAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2025-08-28T13:04:37.091Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-08-28T13:04:37.091Z"
             },
             {
               "$type": "Document",
@@ -114,8 +110,7 @@
               "RelativeToolTip": "Test\\Shader.h",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2025-08-28T12:55:54.476Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-08-28T12:55:54.476Z"
             },
             {
               "$type": "Document",
@@ -125,7 +120,7 @@
               "RelativeDocumentMoniker": "Test\\main.cpp",
               "ToolTip": "C:\\dev\\OpenGL\\3DShaderProgramming\\Test\\Test\\main.cpp",
               "RelativeToolTip": "Test\\main.cpp",
-              "ViewState": "AgIAAAMBAAAAAAAAAAAgwBYBAABZAAAAAAAAAA==",
+              "ViewState": "AgIAAFsBAAAAAAAAAAAlwMABAAAYAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2025-08-25T11:36:58.601Z",
               "EditorCaption": ""

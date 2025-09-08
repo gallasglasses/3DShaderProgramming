@@ -197,13 +197,13 @@
     <ClInclude Include="..\..\backends\imgui_impl_opengl3_loader.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\FG_3DShaderProg\shader.fs" />
-    <None Include="..\..\FG_3DShaderProg\shader.vs" />
-    <None Include="..\..\FG_3DShaderProg\wireframe.fs" />
-    <None Include="..\..\FG_3DShaderProg\wireframe.vs" />
     <None Include="..\..\misc\debuggers\imgui.natstepfilter" />
     <None Include="..\..\misc\debuggers\imgui.natvis" />
     <None Include="..\README.txt" />
+    <None Include="shader.fs" />
+    <None Include="shader.vs" />
+    <None Include="wireframe.fs" />
+    <None Include="wireframe.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

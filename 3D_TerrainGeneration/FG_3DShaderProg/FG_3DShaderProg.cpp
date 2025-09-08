@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <string>
 #include <limits>
+#include <map>
 
 enum EAlgorithm
 {
@@ -57,6 +58,13 @@ namespace FG_3DShaderProg
     EAlgorithm algorithm = EAlgorithm::NONE;
     int size = 128;
     float heightScale = 0.25f;
+
+    /*std::map<ETileType, char> tilePaths = {
+        {ETileType::DIRT, "T_Dirt.png"},
+        {ETileType::GRASS, "T_Grass.png"},
+        {ETileType::ROCK, "T_Rock.png"},
+        {ETileType::SNOW_TIP, "T_snow_mountain.png"}
+    };*/
 
     //RAW_HEIGHTMAP
     char path[256] = "height128.raw";
@@ -121,14 +129,14 @@ namespace FG_3DShaderProg
         // mouse
         if (!IO->WantCaptureMouse && ImGui::IsMouseDown(ImGuiMouseButton_Right))
         {
-            std::cout << "Camera Rotate: " << std::endl;
+            //std::cout << "Camera Rotate: " << std::endl;
             ImVec2 d = IO->MouseDelta;
             camera.ProcessMouseMovement(d.x, -d.y);
         }
 
         if (!IO->WantCaptureMouse && IO->MouseWheel != 0.0f)
         {
-            std::cout << "Camera Zoom: " << std::endl;
+            //std::cout << "Camera Zoom: " << std::endl;
             camera.ProcessMouseScroll(IO->MouseWheel * 2.0f);
         }
     }
@@ -178,6 +186,7 @@ namespace FG_3DShaderProg
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
         terrainShader->use();
+        terrainShader->setInt("terrainTex",0);
 
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)screenWidth / (float)screenHeight, 0.1f, 2000.0f);
         glm::mat4 view = camera.GetViewMatrix();
