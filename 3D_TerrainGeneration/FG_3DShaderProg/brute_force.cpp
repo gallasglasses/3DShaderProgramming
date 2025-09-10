@@ -133,18 +133,28 @@ void Brute_Force::BuildTerrain()
     LoadTile(ETileType::ROCK, "T_Rock.png");
     LoadTile(ETileType::SNOW_TIP, "T_snow_mountain.png");
 
-    /*LoadTile(ETileType::DIRT, "T_Dirt_10.png");
-    LoadTile(ETileType::GRASS, "T_Grass_10.png");
-    LoadTile(ETileType::ROCK, "T_Rock_10.png");
-    LoadTile(ETileType::SNOW_TIP, "T_snow_mountain_10.png");*/
+    /*LoadTile(ETileType::DIRT, "T_RedDirt_50.png");
+    LoadTile(ETileType::GRASS, "T_GreenGrass_50.png");
+    LoadTile(ETileType::ROCK, "T_BlueRock_50.png");
+    LoadTile(ETileType::SNOW_TIP, "T_WhiteSnow_50.png");*/
 
-    SetRegion(ETileType::DIRT, 0, 40, 80);
+    /*SetRegion(ETileType::DIRT, 0, 40, 80);
     SetRegion(ETileType::GRASS, 50, 90, 130);
     SetRegion(ETileType::ROCK, 120, 160, 200);
-    SetRegion(ETileType::SNOW_TIP, 180, 220, 255);
+    SetRegion(ETileType::SNOW_TIP, 180, 220, 255);*/
+
+    SetRegion(ETileType::DIRT, 0, 40, 80);
+    SetRegion(ETileType::GRASS, 50, 90, 150);
+    SetRegion(ETileType::ROCK, 100, 160, 210);
+    SetRegion(ETileType::SNOW_TIP, 170, 220, 255);
+
+    /*SetRegion(ETileType::DIRT, 0, 32, 63);
+    SetRegion(ETileType::GRASS, 64, 96, 126);
+    SetRegion(ETileType::ROCK, 127, 159, 189);
+    SetRegion(ETileType::SNOW_TIP, 190, 222, 255);*/
 
     if(!GenerateTextureMap(4096, 8.0f))
-    //if(!GenerateTextureMap(10, 8.0f))
+    //if(!GenerateTextureMap(50, 8.0f))
     {
         std::cout << "Brute_Force::GenerateTextureMap() failed" << std::endl;
         return;

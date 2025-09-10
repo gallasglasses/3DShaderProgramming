@@ -90,6 +90,7 @@ protected:
     bool LoadTile(ETileType type, const std::string& path);
     void SetRegion(ETileType type, int low, int opt, int high);
 
+
 public:
 
 	int m_iSize;

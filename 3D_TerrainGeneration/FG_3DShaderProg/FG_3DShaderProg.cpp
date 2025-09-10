@@ -57,7 +57,7 @@ namespace FG_3DShaderProg
 
     EAlgorithm algorithm = EAlgorithm::NONE;
     int size = 128;
-    //int size = 10;
+    //int size = 50;
     float heightScale = 0.25f;
 
     /*std::map<ETileType, char> tilePaths = {
@@ -69,12 +69,14 @@ namespace FG_3DShaderProg
 
     //RAW_HEIGHTMAP
     char path[256] = "height128.raw";
-    //char path[256] = "heightmap_0.raw";
+    //char path[256] = "heightmap_50.raw";
+
     //FAULT_FORMATION
     int iterations = 100;
     int minDelta = 0;
     int maxDelta = 255;
     float filter = 0.1f;
+
     //MIDPOINT_DISPLACEMENT
     int n = 7;
     int seed = 777;

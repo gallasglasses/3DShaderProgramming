@@ -233,11 +233,19 @@ float Terrain::RegionPercent(const TextureTile& tile, float h)
         return 1.f;
     }*/
 
-    if (h < tile.region.lowHeight)
+    if (h <= tile.region.lowHeight && tile.region.lowHeight <= 0)
+    {
+        return 1.f;
+    }
+    else if (h >= tile.region.highHeight && tile.region.highHeight >= 255)
+    {
+        return 1.f;
+    }
+    if (h <= tile.region.lowHeight)
     {
         return 0.f;
     }
-    else if (h > tile.region.highHeight)
+    else if (h >= tile.region.highHeight)
     {
         return 0.f;
     }
@@ -246,10 +254,7 @@ float Terrain::RegionPercent(const TextureTile& tile, float h)
     {
         float num1 = static_cast<float>(h - tile.region.lowHeight);
         float num2 = static_cast<float>(tile.region.optimalHeight - tile.region.lowHeight);
-        if (num2 > 0)
-        {
-            return num1 / num2;
-        }
+        return num1 / num2;
     }
     else if (h == tile.region.optimalHeight)
     {
@@ -258,10 +263,7 @@ float Terrain::RegionPercent(const TextureTile& tile, float h)
     else if(h > tile.region.optimalHeight)
     {
         float num = static_cast<float>(tile.region.highHeight - tile.region.optimalHeight);
-        if (num > 0)
-        {
-            return (num - static_cast<float>(tile.region.optimalHeight - h)) / num;
-        }
+            return static_cast<float>(tile.region.highHeight - h) / num;
     }
 
     return 0.f;
@@ -272,74 +274,61 @@ float Terrain::InterpolateHeight(int x, int z, float heightToTexRatio)
     float scaledX = x * heightToTexRatio;
     float scaledZ = z * heightToTexRatio;
 
-    int x0 = static_cast<int>(scaledX);
-    int z0 = static_cast<int>(scaledZ);
+    int x0 = static_cast<int>(std::floor(scaledX));
+    int z0 = static_cast<int>(std::floor(scaledZ));
 
     float x1, z1;
-    x1 = (x0 + 1 > m_iSize - 1) ? (x0 + 0,5) : x0 + 1;
-    z1 = (z0 + 1 > m_iSize - 1) ? (x0 + 0,5) : z0 + 1;
+    x1 = (x0 + 1 < m_iSize) ? (x0 + 1) : x0;
+    z1 = (z0 + 1 < m_iSize) ? (z0 + 1) : z0;
 
-    float w00 = ((x1 - scaledX) * (z1 - scaledZ)) / ((x1 - x0) * (z1 - z0));
+    float fx = scaledX - x0; // divide by (x1 - x0) = 1
+    float fy = scaledZ - z0; // divide by (z1 - z0) = 1
+
+    float h00 = GetHeightAtPoint(x0, z0);
+    float h10 = GetHeightAtPoint(x1, z0);
+    float h01 = GetHeightAtPoint(x0, z1);
+    float h11 = GetHeightAtPoint(x1, z1);
+
+    float hx0 = h00 * (1.0f - fx) + h10 * fx;
+    float hx1 = h01 * (1.0f - fx) + h11 * fx;
+    float interpolation = hx0 * (1.0f - fy) + hx1 * fy;
+
+    //same thing just like from Wikipedia
+    /*float w00 = ((x1 - scaledX) * (z1 - scaledZ)) / ((x1 - x0) * (z1 - z0));
     float w01 = ((x1 - scaledX) * (scaledZ - z0)) / ((x1 - x0) * (z1 - z0));
     float w10 = ((scaledX - x0) * (z1 - scaledZ)) / ((x1 - x0) * (z1 - z0));
     float w11 = ((scaledX - x0) * (scaledZ - z0)) / ((x1 - x0) * (z1 - z0));
 
     float interpolation = GetHeightAtPoint(x0, z0) * w00 + GetHeightAtPoint(x1, z0) * w01 +
-        GetHeightAtPoint(x0, z1) * w10 + GetHeightAtPoint(x1, z1) * w11;
+        GetHeightAtPoint(x0, z1) * w10 + GetHeightAtPoint(x1, z1) * w11;*/
 
     return interpolation;
 
-    /*float scaledX = x * heightToTexRatio;
+    /*unsigned char low, highX, highZ;
+    float interpX, interpZ;
+
+    float scaledX = x * heightToTexRatio;
     float scaledZ = z * heightToTexRatio;
+    float interpolation;
 
-    int x0 = static_cast<int>(scaledX);
-    int z0 = static_cast<int>(scaledZ);
+    low = GetHeightAtPoint(static_cast<int>(scaledX), static_cast<int>(scaledZ));
+    if(scaledX + 1 > m_iSize - 1)
+        return low;
+    else
+        highX = GetHeightAtPoint(static_cast<int>(scaledX + 1), static_cast<int>(scaledZ));
 
-    int x1, z1;
-    x1 = (x0 + 1 > m_iSize - 1) ? (m_iSize - 1) : x0 + 1;
-    z1 = (z0 + 1 > m_iSize - 1) ? (m_iSize - 1) : z0 + 1;
+    interpolation = scaledX - static_cast<int>(scaledX);
+    interpX = (highX - low) * interpolation + low; //(percentage - percentage increase) * difference + minimum value
 
-    float xOffset = x0 - scaledX;
-    float zOffset = z0 - scaledZ;
+    if (scaledZ + 1 > m_iSize - 1)
+        return low;
+    else
+        highZ = GetHeightAtPoint(static_cast<int>(scaledX), static_cast<int>(scaledZ + 1));
 
-    float p00 = GetHeightAtPoint(x0, z0);
-    float p10 = GetHeightAtPoint(x1, z0);
-    float p01 = GetHeightAtPoint(x0, z1);
-    float p11 = GetHeightAtPoint(x1, z1);
+    interpolation = scaledZ - static_cast<int>(scaledZ);
+    interpZ = (highZ - low) * interpolation + low;
 
-    float bottom = p00 + (p10 - p00) * xOffset;
-    float top = p01 + (p11 - p01) * xOffset;
-    float interpolate = bottom + (top - bottom) * zOffset;
-
-    return interpolate;*/
-    //return static_cast<unsigned char>(interpolate);
-
-    //unsigned char low, highX, highZ;
-    //float interpX, interpZ;
-
-    //float scaledX = x * heightToTexRatio;
-    //float scaledZ = z * heightToTexRatio;
-    //float interpolation;
-
-    //low = GetHeightAtPoint(static_cast<int>(scaledX), static_cast<int>(scaledZ));
-    //if(scaledX + 1 > m_iSize - 1)
-    //    return low;
-    //else
-    //    highX = GetHeightAtPoint(static_cast<int>(scaledX + 1), static_cast<int>(scaledZ));
-
-    //interpolation = scaledX - static_cast<int>(scaledX);
-    //interpX = (highX - low) * interpolation + low; //(percentage - percentage increase) * difference + minimum value
-
-    //if (scaledZ + 1 > m_iSize - 1)
-    //    return low;
-    //else
-    //    highZ = GetHeightAtPoint(static_cast<int>(scaledX), static_cast<int>(scaledZ + 1));
-
-    //interpolation = scaledZ - static_cast<int>(scaledZ);
-    //interpZ = (highZ - low) * interpolation + low;
-
-    //return (interpX + interpZ) / 2;
-    //return static_cast<unsigned char>((interpX + interpZ) / 2);
+    return (interpX + interpZ) / 2;*/
 }
 
 bool Terrain::UploadToGL()
@@ -402,11 +391,14 @@ bool Terrain::LoadTile(ETileType type, const std::string& path)
 
 void Terrain::SetRegion(ETileType type, int low, int opt, int high)
 {
-    low = std::max(0, std::min(255, low));
-    opt = std::max(0, std::min(255, opt));
-    high = std::max(0, std::min(255, high));
+    int nlow = std::max(0, std::min(255, low));
+    std::cout << "nlow '" << nlow << "'" << std::endl;
+    int nopt = std::max(0, std::min(255, opt));
+    std::cout << "nopt '" << nopt << "'" << std::endl;
+    int nhigh = std::max(0, std::min(255, high));
+    std::cout << "nhigh '" << nhigh << "'" << std::endl;
 
-    tiles[type].region = {low, opt, high};
+    tiles[type].region = { nlow, nopt, nhigh };
 }
 
 Terrain::~Terrain()
@@ -542,7 +534,7 @@ bool Terrain::GenerateTextureMap(int textureSize, float tileRepeat)
     mapPixels.assign(m_textureSize * m_textureSize * 3, 0);
 
 
-    const float mapRatio = static_cast<float>(m_iSize) / static_cast<float>(m_textureSize);
+    const float mapRatio = static_cast<float>(m_iSize - 1) / static_cast<float>(m_textureSize - 1);
 
     for (int z = 0; z < m_textureSize; z++)
     {
@@ -553,15 +545,16 @@ bool Terrain::GenerateTextureMap(int textureSize, float tileRepeat)
             float totalBlue = 0.f;
             float totalBlend = 0.f;
 
-            float interpHeight = InterpolateHeight(x, z, mapRatio);
+            float interpHeight = std::clamp(InterpolateHeight(x, z, mapRatio), 0.f, 255.f);
+            //float interpHeight = InterpolateHeight(x, z, mapRatio);
 
             for (const TextureTile& tile : tiles)
             {
                 if (tile.isEnabled && tile.image.IsLoaded())
                 {
                     float blend = RegionPercent(tile, interpHeight);
-                    //blend = blend - std::floor(blend);
-                    if (blend <= 0.f) continue;
+                    
+                    //if (blend <= 0.f) continue;
 
                     float fx = x * tileRepeat;
                     float fz = z * tileRepeat;
@@ -575,20 +568,21 @@ bool Terrain::GenerateTextureMap(int textureSize, float tileRepeat)
                     unsigned char g = tile.image.pixels[idx + 1];
                     unsigned char b = tile.image.pixels[idx + 2];
 
-                    //std::cout << "Blend = " << blend << " z " << z << " x " << x << " idx " << idx << std::endl;
                     totalRed += blend * (float)r;
                     totalGreen += blend * (float)g;
                     totalBlue += blend * (float)b;
+                    //std::cout << "interpHeight = " << interpHeight << " | Blend = " << blend << " | r " << (float)r << " | g " << (float)g << " | b " << (float)b << " | z " << z << " | x " << x << " | idx " << idx << std::endl;
+
                     totalBlend += blend;
                 }
             }
 
-            /*if (totalBlend > 0.f)
+            if (totalBlend > 0.f)
             {
                 totalRed /= totalBlend;
                 totalGreen /= totalBlend;
                 totalBlue /= totalBlend;
-            }*/
+            }
 
             totalRed = std::clamp(totalRed, 0.f, 255.f);
             totalGreen = std::clamp(totalGreen, 0.f, 255.f);
