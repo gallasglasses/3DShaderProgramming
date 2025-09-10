@@ -133,12 +133,18 @@ void Brute_Force::BuildTerrain()
     LoadTile(ETileType::ROCK, "T_Rock.png");
     LoadTile(ETileType::SNOW_TIP, "T_snow_mountain.png");
 
+    /*LoadTile(ETileType::DIRT, "T_Dirt_10.png");
+    LoadTile(ETileType::GRASS, "T_Grass_10.png");
+    LoadTile(ETileType::ROCK, "T_Rock_10.png");
+    LoadTile(ETileType::SNOW_TIP, "T_snow_mountain_10.png");*/
+
     SetRegion(ETileType::DIRT, 0, 40, 80);
     SetRegion(ETileType::GRASS, 50, 90, 130);
     SetRegion(ETileType::ROCK, 120, 160, 200);
     SetRegion(ETileType::SNOW_TIP, 180, 220, 255);
 
     if(!GenerateTextureMap(4096, 8.0f))
+    //if(!GenerateTextureMap(10, 8.0f))
     {
         std::cout << "Brute_Force::GenerateTextureMap() failed" << std::endl;
         return;

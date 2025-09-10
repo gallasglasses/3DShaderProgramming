@@ -214,34 +214,86 @@ void Terrain::CalculateMidpointDisplacement(MidpointDisplacement& data, int step
     CalculateMidpointDisplacement(data, step / 2);
 }
 
-float Terrain::RegionPercent(const TextureRegion& region, uint8_t h)
+float Terrain::RegionPercent(const TextureTile& tile, float h)
 {
-    if(h < region.lowHeight || h > region.highHeight) return 0.f;
-    if(h == region.optimalHeight) return 1.f;
-
-    if (h < region.optimalHeight)
+    /*if (tile.tileType == ETileType::DIRT && h < tile.region.optimalHeight)
     {
-        float num1 = static_cast<float>(h - region.lowHeight);
-        float num2 = static_cast<float>(region.optimalHeight - region.lowHeight);
-        if(num2 > 0)
-            return num1 / num2;
-        else
-            return 0.f;
+        return 1.f;
     }
-    else
+    else if (tile.tileType == ETileType::GRASS && h < tile.region.optimalHeight)
     {
-        float num = static_cast<float>(region.highHeight - region.optimalHeight);
+        return 1.f;
+    }
+    else if (tile.tileType == ETileType::ROCK && h < tile.region.optimalHeight)
+    {
+        return 1.f;
+    }
+    else if (tile.tileType == ETileType::SNOW_TIP && h < tile.region.optimalHeight)
+    {
+        return 1.f;
+    }*/
+
+    if (h < tile.region.lowHeight)
+    {
+        return 0.f;
+    }
+    else if (h > tile.region.highHeight)
+    {
+        return 0.f;
+    }
+
+    if (h < tile.region.optimalHeight)
+    {
+        float num1 = static_cast<float>(h - tile.region.lowHeight);
+        float num2 = static_cast<float>(tile.region.optimalHeight - tile.region.lowHeight);
+        if (num2 > 0)
+        {
+            return num1 / num2;
+        }
+    }
+    else if (h == tile.region.optimalHeight)
+    {
+        return 1.f;
+    }
+    else if(h > tile.region.optimalHeight)
+    {
+        float num = static_cast<float>(tile.region.highHeight - tile.region.optimalHeight);
         if (num > 0)
-            return (num - static_cast<float>(region.optimalHeight - h)) / num;
-        else
-            return 0.f;
+        {
+            return (num - static_cast<float>(tile.region.optimalHeight - h)) / num;
+        }
     }
 
     return 0.f;
 }
 
-unsigned char Terrain::InterpolateHeight(int x, int z, float heightToTexRatio)
+float Terrain::InterpolateHeight(int x, int z, float heightToTexRatio)
 {
+    /*float scaledX = x * heightToTexRatio;
+    float scaledZ = z * heightToTexRatio;
+
+    int x0 = static_cast<int>(scaledX);
+    int z0 = static_cast<int>(scaledZ);
+
+    int x1, z1;
+    x1 = (x0 + 1 > m_iSize - 1) ? (m_iSize - 1) : x0 + 1;
+    z1 = (z0 + 1 > m_iSize - 1) ? (m_iSize - 1) : z0 + 1;
+
+    float xOffset = x0 - scaledX;
+    float zOffset = z0 - scaledZ;
+
+    float p00 = GetHeightAtPoint(x0, z0);
+    float p10 = GetHeightAtPoint(x1, z0);
+    float p01 = GetHeightAtPoint(x0, z1);
+    float p11 = GetHeightAtPoint(x1, z1);
+
+    float bottom = p00 + (p10 - p00) * xOffset;
+    float top = p01 + (p11 - p01) * xOffset;
+    float interpolate = bottom + (top - bottom) * zOffset;
+
+    return interpolate;*/
+    //return static_cast<unsigned char>(interpolate);
+
     unsigned char low, highX, highZ;
     float interpX, interpZ;
 
@@ -266,7 +318,8 @@ unsigned char Terrain::InterpolateHeight(int x, int z, float heightToTexRatio)
     interpolation = scaledZ - static_cast<int>(scaledZ);
     interpZ = (highZ - low) * interpolation + low;
 
-    return static_cast<unsigned char>((interpX + interpZ) / 2);
+    return (interpX + interpZ) / 2;
+    //return static_cast<unsigned char>((interpX + interpZ) / 2);
 }
 
 bool Terrain::UploadToGL()
@@ -308,12 +361,14 @@ bool Terrain::LoadTile(ETileType type, const std::string& path)
     imageTile.width = width;
     imageTile.height = height;
     imageTile.channels = nrChannels;
+    std::cout << "nrChannels '" << nrChannels << "'" << std::endl;
     imageTile.pixels.assign(data, data + width * height * nrChannels);
 
     stbi_image_free(data);
 
     tiles[type].image = std::move(imageTile);
     tiles[type].isEnabled = true;
+    tiles[type].tileType = type;
 
     countTiles = 0;
 
@@ -464,7 +519,7 @@ bool Terrain::GenerateTextureMap(int textureSize, float tileRepeat)
     if(countTiles == 0)
         return false;
     m_textureSize = textureSize;
-    mapPixels.assign(m_textureSize * m_textureSize * 3, 0.f);
+    mapPixels.assign(m_textureSize * m_textureSize * 3, 0);
 
 
     const float mapRatio = static_cast<float>(m_iSize) / static_cast<float>(m_textureSize);
@@ -473,17 +528,20 @@ bool Terrain::GenerateTextureMap(int textureSize, float tileRepeat)
     {
         for (int x = 0; x < m_textureSize; x++)
         {
-            float totalRed = 0.0f;
-            float totalGreen = 0.0f;
-            float totalBlue = 0.0f;
-            unsigned char interpHeight = InterpolateHeight(x, z, mapRatio);
+            float totalRed = 0.f;
+            float totalGreen = 0.f;
+            float totalBlue = 0.f;
+            float totalBlend = 0.f;
+
+            float interpHeight = InterpolateHeight(x, z, mapRatio);
 
             for (const TextureTile& tile : tiles)
             {
                 if (tile.isEnabled && tile.image.IsLoaded())
                 {
-                    float blend = RegionPercent(tile.region, interpHeight);
-                    if (blend <= 0.0f) continue;
+                    float blend = RegionPercent(tile, interpHeight);
+                    //blend = blend - std::floor(blend);
+                    if (blend <= 0.f) continue;
 
                     float fx = x * tileRepeat;
                     float fz = z * tileRepeat;
@@ -497,14 +555,24 @@ bool Terrain::GenerateTextureMap(int textureSize, float tileRepeat)
                     unsigned char g = tile.image.pixels[idx + 1];
                     unsigned char b = tile.image.pixels[idx + 2];
 
+                    //std::cout << "Blend = " << blend << " z " << z << " x " << x << " idx " << idx << std::endl;
                     totalRed += blend * (float)r;
                     totalGreen += blend * (float)g;
                     totalBlue += blend * (float)b;
+                    totalBlend += blend;
                 }
             }
-            totalRed = std::clamp(totalRed, 0.0f, 255.0f);
-            totalGreen = std::clamp(totalGreen, 0.0f, 255.0f);
-            totalBlue = std::clamp(totalBlue, 0.0f, 255.0f);
+
+            if (totalBlend > 0.f)
+            {
+                totalRed /= totalBlend;
+                totalGreen /= totalBlend;
+                totalBlue /= totalBlend;
+            }
+
+            totalRed = std::clamp(totalRed, 0.f, 255.f);
+            totalGreen = std::clamp(totalGreen, 0.f, 255.f);
+            totalBlue = std::clamp(totalBlue, 0.f, 255.f);
 
             size_t index = static_cast<size_t>(z * textureSize + x) * 3;
             mapPixels[index + 0] = static_cast<unsigned char>(totalRed);

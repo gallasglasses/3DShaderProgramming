@@ -43,6 +43,7 @@ struct ImageTile
 struct TextureTile
 {
     ImageTile image;
+    ETileType tileType;
     TextureRegion region;
     bool isEnabled = false;
 };
@@ -83,8 +84,8 @@ protected:
     void CalculateMidpointDisplacement(MidpointDisplacement& data, int step);
 
     //texture generation
-    float RegionPercent(const TextureRegion& region, uint8_t h);
-    unsigned char InterpolateHeight(int x, int z, float heightToTexRatio);
+    float RegionPercent(const TextureTile& tile, float h);
+    float InterpolateHeight(int x, int z, float heightToTexRatio);
     bool UploadToGL();
     bool LoadTile(ETileType type, const std::string& path);
     void SetRegion(ETileType type, int low, int opt, int high);
