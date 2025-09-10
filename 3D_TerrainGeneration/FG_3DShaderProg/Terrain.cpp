@@ -269,6 +269,26 @@ float Terrain::RegionPercent(const TextureTile& tile, float h)
 
 float Terrain::InterpolateHeight(int x, int z, float heightToTexRatio)
 {
+    float scaledX = x * heightToTexRatio;
+    float scaledZ = z * heightToTexRatio;
+
+    int x0 = static_cast<int>(scaledX);
+    int z0 = static_cast<int>(scaledZ);
+
+    float x1, z1;
+    x1 = (x0 + 1 > m_iSize - 1) ? (x0 + 0,5) : x0 + 1;
+    z1 = (z0 + 1 > m_iSize - 1) ? (x0 + 0,5) : z0 + 1;
+
+    float w00 = ((x1 - scaledX) * (z1 - scaledZ)) / ((x1 - x0) * (z1 - z0));
+    float w01 = ((x1 - scaledX) * (scaledZ - z0)) / ((x1 - x0) * (z1 - z0));
+    float w10 = ((scaledX - x0) * (z1 - scaledZ)) / ((x1 - x0) * (z1 - z0));
+    float w11 = ((scaledX - x0) * (scaledZ - z0)) / ((x1 - x0) * (z1 - z0));
+
+    float interpolation = GetHeightAtPoint(x0, z0) * w00 + GetHeightAtPoint(x1, z0) * w01 +
+        GetHeightAtPoint(x0, z1) * w10 + GetHeightAtPoint(x1, z1) * w11;
+
+    return interpolation;
+
     /*float scaledX = x * heightToTexRatio;
     float scaledZ = z * heightToTexRatio;
 
@@ -294,31 +314,31 @@ float Terrain::InterpolateHeight(int x, int z, float heightToTexRatio)
     return interpolate;*/
     //return static_cast<unsigned char>(interpolate);
 
-    unsigned char low, highX, highZ;
-    float interpX, interpZ;
+    //unsigned char low, highX, highZ;
+    //float interpX, interpZ;
 
-    float scaledX = x * heightToTexRatio;
-    float scaledZ = z * heightToTexRatio;
-    float interpolation;
+    //float scaledX = x * heightToTexRatio;
+    //float scaledZ = z * heightToTexRatio;
+    //float interpolation;
 
-    low = GetHeightAtPoint(static_cast<int>(scaledX), static_cast<int>(scaledZ));
-    if(scaledX + 1 > m_iSize - 1)
-        return low;
-    else
-        highX = GetHeightAtPoint(static_cast<int>(scaledX + 1), static_cast<int>(scaledZ));
+    //low = GetHeightAtPoint(static_cast<int>(scaledX), static_cast<int>(scaledZ));
+    //if(scaledX + 1 > m_iSize - 1)
+    //    return low;
+    //else
+    //    highX = GetHeightAtPoint(static_cast<int>(scaledX + 1), static_cast<int>(scaledZ));
 
-    interpolation = scaledX - static_cast<int>(scaledX);
-    interpX = (highX - low) * interpolation + low; //(percentage - percentage increase) * difference + minimum value
+    //interpolation = scaledX - static_cast<int>(scaledX);
+    //interpX = (highX - low) * interpolation + low; //(percentage - percentage increase) * difference + minimum value
 
-    if (scaledZ + 1 > m_iSize - 1)
-        return low;
-    else
-        highZ = GetHeightAtPoint(static_cast<int>(scaledX), static_cast<int>(scaledZ + 1));
+    //if (scaledZ + 1 > m_iSize - 1)
+    //    return low;
+    //else
+    //    highZ = GetHeightAtPoint(static_cast<int>(scaledX), static_cast<int>(scaledZ + 1));
 
-    interpolation = scaledZ - static_cast<int>(scaledZ);
-    interpZ = (highZ - low) * interpolation + low;
+    //interpolation = scaledZ - static_cast<int>(scaledZ);
+    //interpZ = (highZ - low) * interpolation + low;
 
-    return (interpX + interpZ) / 2;
+    //return (interpX + interpZ) / 2;
     //return static_cast<unsigned char>((interpX + interpZ) / 2);
 }
 
@@ -563,12 +583,12 @@ bool Terrain::GenerateTextureMap(int textureSize, float tileRepeat)
                 }
             }
 
-            if (totalBlend > 0.f)
+            /*if (totalBlend > 0.f)
             {
                 totalRed /= totalBlend;
                 totalGreen /= totalBlend;
                 totalBlue /= totalBlend;
-            }
+            }*/
 
             totalRed = std::clamp(totalRed, 0.f, 255.f);
             totalGreen = std::clamp(totalGreen, 0.f, 255.f);
