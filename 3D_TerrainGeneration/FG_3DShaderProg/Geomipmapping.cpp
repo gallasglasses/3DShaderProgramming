@@ -49,8 +49,8 @@ void Geomipmapping::BuildTerrain()
 
     BuildVBO();
 
-    std::cout << "Geomipmapping::BuildTerrain(): " << "patchSize=" << patchSize
-        << " patches=" << (numPatchX * numPatchZ) << " LODs=" << levels.size() << std::endl;
+    /*std::cout << "Geomipmapping::BuildTerrain(): " << "patchSize=" << patchSize
+        << " patches=" << (numPatchX * numPatchZ) << " LODs=" << levels.size() << std::endl;*/
 
     LoadTile(ETileType::DIRT, "T_Dirt.png");
     LoadTile(ETileType::GRASS, "T_Grass.png");

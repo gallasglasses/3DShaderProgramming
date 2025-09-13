@@ -392,11 +392,8 @@ bool Terrain::LoadTile(ETileType type, const std::string& path)
 void Terrain::SetRegion(ETileType type, int low, int opt, int high)
 {
     int nlow = std::max(0, std::min(255, low));
-    std::cout << "nlow '" << nlow << "'" << std::endl;
     int nopt = std::max(0, std::min(255, opt));
-    std::cout << "nopt '" << nopt << "'" << std::endl;
     int nhigh = std::max(0, std::min(255, high));
-    std::cout << "nhigh '" << nhigh << "'" << std::endl;
 
     tiles[type].region = { nlow, nopt, nhigh };
 }

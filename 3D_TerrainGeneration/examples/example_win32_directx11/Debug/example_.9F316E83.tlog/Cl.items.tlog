@@ -1,8 +1,0 @@
-C:\dev\OpenGL\3DShaderProgramming\3D_TerrainGeneration\imgui.cpp;C:\dev\OpenGL\3DShaderProgramming\3D_TerrainGeneration\examples\example_win32_directx11\Debug\imgui.obj
-C:\dev\OpenGL\3DShaderProgramming\3D_TerrainGeneration\imgui_demo.cpp;C:\dev\OpenGL\3DShaderProgramming\3D_TerrainGeneration\examples\example_win32_directx11\Debug\imgui_demo.obj
-C:\dev\OpenGL\3DShaderProgramming\3D_TerrainGeneration\imgui_draw.cpp;C:\dev\OpenGL\3DShaderProgramming\3D_TerrainGeneration\examples\example_win32_directx11\Debug\imgui_draw.obj
-C:\dev\OpenGL\3DShaderProgramming\3D_TerrainGeneration\imgui_tables.cpp;C:\dev\OpenGL\3DShaderProgramming\3D_TerrainGeneration\examples\example_win32_directx11\Debug\imgui_tables.obj
-C:\dev\OpenGL\3DShaderProgramming\3D_TerrainGeneration\imgui_widgets.cpp;C:\dev\OpenGL\3DShaderProgramming\3D_TerrainGeneration\examples\example_win32_directx11\Debug\imgui_widgets.obj
-C:\dev\OpenGL\3DShaderProgramming\3D_TerrainGeneration\backends\imgui_impl_dx11.cpp;C:\dev\OpenGL\3DShaderProgramming\3D_TerrainGeneration\examples\example_win32_directx11\Debug\imgui_impl_dx11.obj
-C:\dev\OpenGL\3DShaderProgramming\3D_TerrainGeneration\backends\imgui_impl_win32.cpp;C:\dev\OpenGL\3DShaderProgramming\3D_TerrainGeneration\examples\example_win32_directx11\Debug\imgui_impl_win32.obj
-C:\dev\OpenGL\3DShaderProgramming\3D_TerrainGeneration\examples\example_win32_directx11\main.cpp;C:\dev\OpenGL\3DShaderProgramming\3D_TerrainGeneration\examples\example_win32_directx11\Debug\main.obj
