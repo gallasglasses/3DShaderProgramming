@@ -55,6 +55,9 @@
     <ClCompile Include="..\..\FG_3DShaderProg\glad.c">
       <Filter>sources\FG_3DShaderProg</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\FG_3DShaderProg\Geomipmapping.cpp">
+      <Filter>sources\FG_3DShaderProg</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\imconfig.h">
@@ -94,6 +97,9 @@
       <Filter>sources\FG_3DShaderProg</Filter>
     </ClInclude>
     <ClInclude Include="..\..\FG_3DShaderProg\FG_3DShaderProg.h">
+      <Filter>sources\FG_3DShaderProg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\FG_3DShaderProg\Geomipmapping.h">
       <Filter>sources\FG_3DShaderProg</Filter>
     </ClInclude>
   </ItemGroup>

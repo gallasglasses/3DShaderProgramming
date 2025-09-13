@@ -5,6 +5,7 @@
 #include <random>
 #include <array>
 #include <stb_image.h>
+#include "camera.h"
 
 struct MidpointDisplacement
 {
@@ -13,6 +14,14 @@ struct MidpointDisplacement
     float amplitudeDecline;
     int EdgeLength;
     std::vector<float> heights;
+};
+
+struct BFVertex
+{
+    glm::vec3 pos;
+    glm::vec3 color;
+    glm::vec2 texCoord;
+    glm::vec3 normal;
 };
 
 enum ETileType
@@ -99,7 +108,8 @@ public:
 	Terrain() : m_fHeightScale(1.0f), m_iSize(0) {};
 	~Terrain();
 
-	virtual void Render () = 0;
+	virtual void Render (const Camera& cam) = 0;
+	virtual void BuildTerrain() = 0;
 
 	bool GenerateFaultFormation(int size, int iterations, int minDelta, int maxDelta, float filter);
 	bool GenerateMidpointDisplacement(int size, int seed, float amplitude, float factor);
@@ -109,6 +119,7 @@ public:
 	bool SaveHeightMap(const std::string& filename);
 	bool UnloadHeightMap();
 
+	inline float GetHeightScale() { return m_fHeightScale; }
 	inline void SetHeightScale(float fScale) { m_fHeightScale = fScale; }
 	inline void SetHeightAtPoint(unsigned char ucHeight, int iX, int iZ) { m_heightData.m_Data[(iZ * m_iSize) + iX] = ucHeight; }
 	inline unsigned char GetHeightAtPoint(int iX, int iZ) const { return m_heightData.m_Data[(iZ * m_iSize) + iX];  }

@@ -168,6 +168,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\FG_3DShaderProg\brute_force.cpp" />
     <ClCompile Include="..\..\FG_3DShaderProg\FG_3DShaderProg.cpp" />
+    <ClCompile Include="..\..\FG_3DShaderProg\Geomipmapping.cpp" />
     <ClCompile Include="..\..\FG_3DShaderProg\glad.c" />
     <ClCompile Include="..\..\FG_3DShaderProg\shader.cpp" />
     <ClCompile Include="..\..\FG_3DShaderProg\stb_image.cpp" />
@@ -185,6 +186,7 @@
     <ClInclude Include="..\..\FG_3DShaderProg\brute_force.h" />
     <ClInclude Include="..\..\FG_3DShaderProg\camera.h" />
     <ClInclude Include="..\..\FG_3DShaderProg\FG_3DShaderProg.h" />
+    <ClInclude Include="..\..\FG_3DShaderProg\Geomipmapping.h" />
     <ClInclude Include="..\..\FG_3DShaderProg\height_data.h" />
     <ClInclude Include="..\..\FG_3DShaderProg\shader.h" />
     <ClInclude Include="..\..\FG_3DShaderProg\stb_image.h" />

@@ -8,6 +8,7 @@
 #include "shader.h"
 #include "camera.h"
 #include "brute_force.h"
+#include "Geomipmapping.h"
 #include "stb_image.h"
 
 #include <glm/glm.hpp>
@@ -26,6 +27,12 @@ enum EAlgorithm
     RAW_HEIGHTMAP,
     FAULT_FORMATION,
     MIDPOINT_DISPLACEMENT
+};
+
+enum EOptimization
+{
+    BRUTE_FORCE = 0,
+    GEOMIPMAPPING
 };
 
 namespace FG_3DShaderProg
@@ -52,13 +59,22 @@ namespace FG_3DShaderProg
 
     Shader* terrainShader = nullptr;
     Shader* wireShader = nullptr;
-    Brute_Force terrain;
+
+    Brute_Force bruteTerrain;
+    Geomipmapping geomipTerrain(3);
+    Terrain* terrain = &bruteTerrain;
+
     bool wireframe = false;
 
     EAlgorithm algorithm = EAlgorithm::NONE;
+    EOptimization optimization = EOptimization::BRUTE_FORCE; //EOptimization::BRUTE_FORCE;
+
     int size = 128;
     //int size = 50;
     float heightScale = 0.25f;
+
+    int patchSizeUI = 3;
+    int k = 1;
 
     /*std::map<ETileType, char> tilePaths = {
         {ETileType::DIRT, "T_Dirt.png"},
@@ -83,6 +99,30 @@ namespace FG_3DShaderProg
     float amplitude = 1.f;
     float factor = 1.5f;
 
+    //LIGHTNING
+    struct LightUI
+    {
+        glm::vec3 position = glm::vec3(0.f, 70.f, 140.f); //glm::vec3(200.0f, 300.0f, 200.0f)
+        glm::vec3 ambient = glm::vec3(0.15f); // 0-1
+        glm::vec3 diffuse = glm::vec3(0.85f); // 0-1
+        glm::vec3 specular = glm::vec3(1.f); // 0-1
+
+        bool  followCamera = false;
+        bool blinn = false;
+        bool blinnKeyPressed = false;
+        bool inverse_normals = false;
+    } light;
+
+    struct MaterialUI
+    {
+        glm::vec3 ambient = glm::vec3(1.f);
+        glm::vec3 diffuse = glm::vec3(1.f);
+        glm::vec3 specular = glm::vec3(1.f);
+
+        float shininess = 32.0f; // 1-256
+    } material;
+
+
     bool Init(GLFWwindow* w)
     {
         window = w;
@@ -95,13 +135,14 @@ namespace FG_3DShaderProg
         terrainShader = new Shader("shader.vs", "shader.fs");
         wireShader = new Shader("wireframe.vs", "wireframe.fs");
 
-        if (!terrain.LoadHeightMap(path, size))
+        if (!terrain->LoadHeightMap(path, size))
         {
             std::cout << "Failed to load heightmap at init: " << path << std::endl;
             return false;
         }
-        terrain.SetHeightScale(heightScale);
-        terrain.BuildTerrain();
+
+        terrain->SetHeightScale(heightScale);
+        terrain->BuildTerrain();
 
         return true;
     }
@@ -128,6 +169,18 @@ namespace FG_3DShaderProg
                 camera.ProcessKeyboard(UP, deltaTime);
             if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
                 camera.ProcessKeyboard(DOWN, deltaTime);
+
+
+
+            if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS && !light.blinnKeyPressed)
+            {
+                light.blinn = !light.blinn;
+                light.blinnKeyPressed = true;
+            }
+            if (glfwGetKey(window, GLFW_KEY_B) == GLFW_RELEASE)
+            {
+                light.blinnKeyPressed = false;
+            }
         }
 
         // mouse
@@ -147,26 +200,36 @@ namespace FG_3DShaderProg
 
     void RebuildTerrain()
     {
+        switch (optimization)
+        {
+            case EOptimization::BRUTE_FORCE:
+                terrain = &bruteTerrain;
+                break;
+            case EOptimization::GEOMIPMAPPING:
+                terrain = &geomipTerrain;
+                geomipTerrain.SetPatchSize(patchSizeUI);
+                break;
+        }
         switch (algorithm)
         {
             case EAlgorithm::RAW_HEIGHTMAP:
-                if (!terrain.LoadHeightMap(path, size))
+                if (!terrain->LoadHeightMap(path, size))
                 {
                     std::cout << "Failed to load heightmap: " << path << std::endl;
                     break;
                 }
-                terrain.SetHeightScale(heightScale);
-                terrain.BuildTerrain();
+                terrain->SetHeightScale(heightScale);
+                terrain->BuildTerrain();
                 break;
             case EAlgorithm::FAULT_FORMATION:
-                terrain.GenerateFaultFormation(size, iterations, minDelta, maxDelta, filter);
-                terrain.SetHeightScale(heightScale);
-                terrain.BuildTerrain();
+                terrain->GenerateFaultFormation(size, iterations, minDelta, maxDelta, filter);
+                terrain->SetHeightScale(heightScale);
+                terrain->BuildTerrain();
                 break;
             case EAlgorithm::MIDPOINT_DISPLACEMENT:
-                terrain.GenerateMidpointDisplacement(n, seed, amplitude, factor);
-                terrain.SetHeightScale(heightScale);
-                terrain.BuildTerrain();
+                terrain->GenerateMidpointDisplacement(n, seed, amplitude, factor);
+                terrain->SetHeightScale(heightScale);
+                terrain->BuildTerrain();
                 break;
                 
             default:
@@ -200,18 +263,41 @@ namespace FG_3DShaderProg
         terrainShader->setMat4("view", view);
         terrainShader->setMat4("model", model);
 
-        terrain.Render();
+        //Lighting 
+        //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+        glm::vec3 lightPos = light.followCamera ? camera.Position : light.position;
+
+        terrainShader->setBool("useBlinn", light.blinn);
+        terrainShader->setVec3("light.position", lightPos);
+        terrainShader->setVec3("light.ambient", light.ambient);
+        terrainShader->setVec3("light.diffuse", light.diffuse);
+        terrainShader->setVec3("light.specular", light.specular);
+
+        terrainShader->setInt("inverse_normals", light.inverse_normals);
+
+        terrainShader->setVec3("material.ambient", material.ambient);
+        terrainShader->setVec3("material.diffuse", material.diffuse);
+        terrainShader->setVec3("material.specular", material.specular);
+        terrainShader->setFloat("material.shininess", material.shininess);
+
+        terrainShader->setVec3("viewPos", camera.Position);
+
+        //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+        terrain->Render(camera);
 
         if (wireframe)
         {
-            if (!terrainShader) return;
+            if (!wireShader) return;
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             wireShader->use();
             wireShader->setMat4("view", view);
             wireShader->setMat4("projection", projection);
             wireShader->setMat4("model", model);
 
-            terrain.Render();
+            terrain->Render(camera);
         }
     }
 
@@ -222,8 +308,15 @@ namespace FG_3DShaderProg
         //IMGUI_DEMO_MARKER("Widgets/Basic/SliderInt, SliderFloat");
         ImGui::TextUnformatted("Algorithm:");
 
+        static int chosenOptimization = 0;
+        ImGui::RadioButton("Brute Force", &chosenOptimization, 0); ImGui::SameLine();
+        ImGui::RadioButton("Geomipmapping", &chosenOptimization, 1);
+
         static int chosenAlgorithm = 1;
-        ImGui::RadioButton("RAW Heightmap (Brute Force)", &chosenAlgorithm, 1); ImGui::SameLine();
+
+        ImGui::BeginDisabled(chosenOptimization == 1);
+        ImGui::RadioButton("RAW Heightmap", &chosenAlgorithm, 1); ImGui::SameLine();
+        ImGui::EndDisabled();
         ImGui::RadioButton("Fault Formation", &chosenAlgorithm, 2); ImGui::SameLine();
         ImGui::RadioButton("Midpoint Displacement", &chosenAlgorithm, 3);
 
@@ -237,6 +330,16 @@ namespace FG_3DShaderProg
         /*ImGui::DragInt("drag int 0..100", &i2, 1, 0, 100, "%d%%", ImGuiSliderFlags_AlwaysClamp);
         ImGui::DragInt("drag int wrap 100..200", &i3, 1, 100, 200, "%d", ImGuiSliderFlags_WrapAround);*/
 
+        switch (chosenOptimization)
+        {
+            case 0:
+                optimization = EOptimization::BRUTE_FORCE;
+                break;
+            case 1:
+                optimization = EOptimization::GEOMIPMAPPING;
+                break;
+        }
+
         switch (chosenAlgorithm)
         {
             case 1:
@@ -249,7 +352,39 @@ namespace FG_3DShaderProg
                 break;
             case 2:
                 algorithm = EAlgorithm::FAULT_FORMATION;
-                ImGui::SliderInt("Size", &size, 2, 4096, "%d", ImGuiSliderFlags_AlwaysClamp);
+                if (optimization == EOptimization::BRUTE_FORCE)
+                {
+                    ImGui::SliderInt("Size", &size, 2, 4096, "%d", ImGuiSliderFlags_AlwaysClamp);
+                }
+                else
+                {
+                    size = static_cast<int>(std::pow(2, n) + 1);
+                    if (ImGui::SliderInt("n", &n, 1, 11, "%d", ImGuiSliderFlags_AlwaysClamp))
+                    {
+                        size = std::max(2, static_cast<int>(std::pow(2, n) + 1));
+                        if (k > n)
+                        {
+                            k = n;
+                        }
+                    }
+                    ImGui::SameLine();
+                    ImGui::Text(" | Size = 2^n + 1 = % d", size);
+
+                    if (optimization == EOptimization::GEOMIPMAPPING)
+                    {
+                        patchSizeUI = static_cast<int>(std::pow(2, k) + 1);
+                        if (ImGui::SliderInt("k", &k, 1, 11, "%d", ImGuiSliderFlags_AlwaysClamp))
+                        {
+                            patchSizeUI = std::max(2, static_cast<int>(std::pow(2, k) + 1));
+                            if (k > n)
+                            {
+                                k = n;
+                            }
+                        }
+                        ImGui::SameLine();
+                        ImGui::Text(" | PatchSize = 2^k + 1 = % d", patchSizeUI);
+                    }
+                }
                 ImGui::SliderInt("Iterations", &iterations, 1, 10000, "%d", ImGuiSliderFlags_AlwaysClamp);
                 ImGui::SliderFloat("Filter", &filter, 0.0f, 1.0f, "%.3f");
                 ImGui::SameLine(); HelpMarker("CTRL+click to input value.");
@@ -264,9 +399,28 @@ namespace FG_3DShaderProg
                 if (ImGui::SliderInt("n", &n, 1, 11, "%d", ImGuiSliderFlags_AlwaysClamp))
                 {
                     size = std::max(2, static_cast<int>(std::pow(2, n) + 1));
+                    if (k > n)
+                    {
+                        k = n;
+                    }
                 }
                 ImGui::SameLine();
                 ImGui::Text(" | Size = 2^n + 1 = % d", size);
+
+                if (optimization == EOptimization::GEOMIPMAPPING)
+                {
+                    patchSizeUI = static_cast<int>(std::pow(2, k) + 1);
+                    if (ImGui::SliderInt("k", &k, 1, 11, "%d", ImGuiSliderFlags_AlwaysClamp))
+                    {
+                        patchSizeUI = std::max(2, static_cast<int>(std::pow(2, k) + 1));
+                        if (k > n)
+                        {
+                            k = n;
+                        }
+                    }
+                    ImGui::SameLine();
+                    ImGui::Text(" | PatchSize = 2^k + 1 = % d", patchSizeUI);
+                }
 
                 //ImGui::InputInt("RNG Seed", &seed);
                 //ImGui::DragInt("RNG Seed", &seed, 1, 1, INT_MAX, "%d", ImGuiSliderFlags_AlwaysClamp);
@@ -286,11 +440,68 @@ namespace FG_3DShaderProg
         ImGui::SeparatorText("Camera");
         ImGui::Text("WASD/QE move, RMB drag to look");
         ImGui::SliderFloat("FOV", &camera.Zoom, 20.0f, 90.0f, "%.0f deg");
+        ImGui::SliderFloat("Speed", &camera.MovementSpeed, 1.0f, 100.0f, "%.1f");
 
         ImGui::SeparatorText("Debug");
         ImGui::Text("Cam pos: (%.1f, %.1f, %.1f)", camera.Position.x, camera.Position.y, camera.Position.z);
         ImGui::Text("DeltaTime: %.3f ms (%.1f FPS)", deltaTime * 1000.0f, 1.0f / std::max(1e-6f, deltaTime));
         ImGui::Text("Size: %d  HeightScale: %.2f", size, heightScale);
+
+        if (ImGui::CollapsingHeader("Lighting", ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            float posMin = -static_cast<float>(size);
+            float posMax = static_cast<float>(size);
+            float posYMin = 0.f;
+            float posYMax = static_cast<float>(size) * 2.f;
+
+            ImGui::Checkbox("Use Blinn (B)", &light.blinn);
+            if (light.blinn)
+            {
+                ImGui::SameLine();
+                ImGui::Text(" | TRUE");
+            }
+            else
+            {
+                ImGui::SameLine();
+                ImGui::Text(" | FALSE");
+            }
+            ImGui::Checkbox("Head-light (follow camera)", &light.followCamera);
+
+            ImGui::BeginDisabled(light.followCamera);
+            ImGui::SliderFloat("Light Y", &light.position.y, posYMin, posYMax, "%.1f");
+            ImGui::SliderFloat2("Light XZ", &light.position.x, posMin, posMax, "%.1f");
+            ImGui::EndDisabled();
+
+            ImGui::SeparatorText("Light");
+            ImGui::ColorEdit3("L Ambient", &light.ambient.x, ImGuiColorEditFlags_Float);
+            ImGui::ColorEdit3("L Diffuse", &light.diffuse.x, ImGuiColorEditFlags_Float);
+            ImGui::ColorEdit3("L Specular", &light.specular.x, ImGuiColorEditFlags_Float);
+
+            ImGui::SeparatorText("Material");
+            ImGui::ColorEdit3("M Ambient", &material.ambient.x, ImGuiColorEditFlags_Float);
+            ImGui::ColorEdit3("M Diffuse", &material.diffuse.x, ImGuiColorEditFlags_Float);
+            ImGui::ColorEdit3("M Specular", &material.specular.x, ImGuiColorEditFlags_Float);
+            ImGui::SliderFloat("Shininess", &material.shininess, 1.f, 256.f, "%.0f");
+
+            ImGui::Checkbox("Inverse Normals", &light.inverse_normals);
+
+            if (light.inverse_normals)
+            {
+                ImGui::SameLine();
+                ImGui::Text(" | TRUE");
+            }
+            else
+            {
+                ImGui::SameLine();
+                ImGui::Text(" | FALSE");
+            }
+
+            if (ImGui::Button("Reset Lighting"))
+            {
+                light = LightUI{};
+                material = MaterialUI{};
+            }
+        }
 
         ImGui::End();
     }
@@ -316,128 +527,3 @@ namespace FG_3DShaderProg
         terrainShader = nullptr;
     }
 }
-
-//int main()
-//{
-//    // glfw: initialize and configure
-//    glfwInit();
-//    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-//    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-//    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-//
-//    // glfw window creation
-//    GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "LearnOpenGl", NULL, NULL);
-//    if (window == NULL)
-//    {
-//        std::cout << "Failed to creat GLFW window" << std::endl;
-//        glfwTerminate();
-//        return -1;
-//    }
-//    glfwMakeContextCurrent(window);
-//    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-//    glfwSetCursorPosCallback(window, mouse_callback);
-//    glfwSetScrollCallback(window, scroll_callback);
-//    // ^^^^^^
-//
-//    // glad: load all OpenGL function pointers
-//    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-//    {
-//        std::cout << "Failed to initialize GLAD" << std::endl;
-//        return -1;
-//    }
-//    // ^^^^^^
-//
-//    glEnable(GL_DEPTH_TEST);
-//
-//    Shader terrainShader("Shader.vs", "Shader.fs");
-//
-//    Brute_Force terrain;
-//    //Fault Formation algorithm
-//    //terrain.GenerateFaultFormation(128, 100, 0, 255, 0.1f);
-//
-//    // read RAW heightmap
-//    if (!terrain.LoadHeightMap("height128.raw", 128))
-//    {
-//        std::cout << "Failed to load heightmap" << std::endl;
-//        return -1;
-//    }
-//    terrain.SetHeightScale(0.25f);
-//
-//    //heightmap brute force
-//    //terrain.BuildTerrain();
-//
-//    Shader wireShader("wireframe.vs", "wireframe.fs");
-//
-//
-//    while (!glfwWindowShouldClose(window))
-//    {
-//        float currentFrame = static_cast<float>(glfwGetTime());
-//        deltaTime = currentFrame - lastFrame;
-//        lastFrame = currentFrame;
-//
-//        //Input
-//        processInput(window);
-//
-//        // Rendering commands here
-//        glClearColor(0.2f, 0.08f, 0.2f, 1.f);
-//        //glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-//        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//
-//        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-//        //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-//        //activate the shader
-//        terrainShader.use();
-//        // camera/view transformation
-//        glm::mat4 view = camera.GetViewMatrix();
-//        terrainShader.setMat4("view", view);
-//        // pass projection matrix to shader (note that in this case it could change every frame)
-//        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 1000.0f);
-//        terrainShader.setMat4("projection", projection);
-//        glm::mat4 model(1.f);
-//        terrainShader.setMat4("model", model);
-//        terrain.Render();
-//
-//        /*glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-//        wireShader.use();
-//        wireShader.setMat4("view", view);
-//        wireShader.setMat4("projection", projection);
-//        wireShader.setMat4("model", model);
-//        terrain.Render();*/
-//
-//        glfwSwapBuffers(window);
-//        glfwPollEvents();
-//    }
-//
-//
-//    glfwTerminate();
-//    return 0;
-//}
-//
-//void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-//{
-//	glViewport(0, 0, width, height); // first two parameters set the location of the lower left corner
-//}
-//
-//void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
-//{
-//    float xpos = static_cast<float>(xposIn);
-//    float ypos = static_cast<float>(yposIn);
-//
-//    if (firstMouse)
-//    {
-//        lastX = xpos;
-//        lastY = ypos;
-//        firstMouse = false;
-//    }
-//
-//    float xoffset = xpos - lastX;
-//    float yoffset = lastY - ypos;
-//    lastX = xpos;
-//    lastY = ypos;
-//
-//    camera.ProcessMouseMovement(xoffset, yoffset);
-//}
-//
-//void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
-//{
-//}

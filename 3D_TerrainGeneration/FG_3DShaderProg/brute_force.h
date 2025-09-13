@@ -8,12 +8,6 @@
 #include <glm/glm.hpp>
 
 
-struct BFVertex
-{
-	glm::vec3 pos;
-	glm::vec3 color;
-    glm::vec2 texCoord;
-};
 
 class Brute_Force: public Terrain
 {
@@ -25,7 +19,7 @@ public:
 	Brute_Force();
 	~Brute_Force();
 
-	void Render();
+	void Render(const Camera& cam);
 	void BuildTerrain();
 
 private:

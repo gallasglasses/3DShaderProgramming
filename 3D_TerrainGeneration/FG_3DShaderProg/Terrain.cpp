@@ -520,6 +520,7 @@ bool Terrain::GenerateMidpointDisplacement(int size, int seed, float amplitude, 
 bool Terrain::GenerateTextureMap(int textureSize, float tileRepeat)
 {
     if (m_iSize <= 0) return false;
+    mapPixels.clear();
 
     countTiles = 0;
     for (const TextureTile& tile : tiles)

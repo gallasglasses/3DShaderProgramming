@@ -2,6 +2,7 @@
 #include <vector>
 #include <iostream>
 #include <stb_image.h>
+#include "Geomipmapping.h"
 
 Brute_Force::Brute_Force()
 {
@@ -16,7 +17,7 @@ Brute_Force::~Brute_Force()
     glDeleteTextures(1, &texture);
 }
 
-void Brute_Force::Render()
+void Brute_Force::Render(const Camera& cam)
 {
 	if (VAO == 0 && m_iSize > 1 && !m_heightData.m_Data.empty()) BuildTerrain();
 
@@ -84,6 +85,34 @@ void Brute_Force::BuildTerrain()
 
 	std::cout << "indices size " << indices.size() << std::endl;
 	indexCount = indices.size();
+
+
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    std::vector<glm::vec3> accumNormals(vertices.size(), glm::vec3(0.0f));
+
+    for (size_t i = 0; i < indices.size(); i += 3)
+    {
+        unsigned int i0 = indices[i + 0];
+        unsigned int i1 = indices[i + 1];
+        unsigned int i2 = indices[i + 2];
+
+        const glm::vec3& p0 = vertices[i0].pos;
+        const glm::vec3& p1 = vertices[i1].pos;
+        const glm::vec3& p2 = vertices[i2].pos;
+
+        glm::vec3 n = glm::normalize(glm::cross(p2 - p0, p1 - p0));
+        accumNormals[i0] += n;
+        accumNormals[i1] += n;
+        accumNormals[i2] += n;
+    }
+
+    for (size_t v = 0; v < vertices.size(); v++)
+    {
+        vertices[v].normal = glm::normalize(accumNormals[v]);
+    }
+
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	
 	if (VAO)
 	{
@@ -119,6 +148,9 @@ void Brute_Force::BuildTerrain()
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(BFVertex), (void*)offsetof(BFVertex, texCoord));
 	glEnableVertexAttribArray(2);
 
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(BFVertex), (void*)offsetof(BFVertex, normal));
+    glEnableVertexAttribArray(3);
+
 
 	//glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
@@ -135,7 +167,7 @@ void Brute_Force::BuildTerrain()
 
     /*LoadTile(ETileType::DIRT, "T_RedDirt_50.png");
     LoadTile(ETileType::GRASS, "T_GreenGrass_50.png");
-    LoadTile(ETileType::ROCK, "T_BlueRock_50.png");
+    LoadTile(ETileType::ROCK, "T_BlueG_50.png");
     LoadTile(ETileType::SNOW_TIP, "T_WhiteSnow_50.png");*/
 
     /*SetRegion(ETileType::DIRT, 0, 40, 80);
